@@ -31,7 +31,7 @@ music_gen_secrets = modal.Secret.from_name("music-gen-secret")
 class AudioGenerationBase(BaseModel):
     audio_duration: float = 120.0
     seed: int = -1
-    guidance_float: float = 15.0
+    guidance_scale: float = 15.0
     infer_step: int = 60
     instrumental: bool = False
 
@@ -250,7 +250,7 @@ class MusicGenServer:
             prompt=request.prompt,
             lyrics=request.lyrics,
             description_for_categorization=request.full_described_song,
-            **request.model_dump()            
+            **request.model_dump(exclude={"prompt", "lyrics"})            
         )
     
     @modal.fastapi_endpoint(method="POST")
@@ -264,7 +264,7 @@ class MusicGenServer:
             prompt=request.prompt,
             lyrics=request.described_lyrics,
             description_for_categorization=request.prompt,
-            **request.model_dump(exclude={"described_lyrics"})            
+            **request.model_dump(exclude={"described_lyrics", "prompt"})            
         )
 
 @app.local_entrypoint()
@@ -301,7 +301,7 @@ def main():
     
     response = requests.post(endpoint_url, json=payload)
     response.raise_for_status()
-    result = GenerateMusicResponse(**response.json())
+    result = GenerateMusicResponseS3(**response.json())
     print(
         f"Success: {result.s3_key} {result.cover_image_s3_key} {result.categories}")
 
