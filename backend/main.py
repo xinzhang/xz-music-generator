@@ -6,6 +6,7 @@ import boto3
 import requests
 from typing import List
 from pydantic import BaseModel
+from pydub import AudioSegment
 
 from prompts import LYRICS_GENERATOR_PROMPT, PROMPT_GENERATOR_PROMPT
 
@@ -13,7 +14,7 @@ app = modal.App("music-generator")
 
 image = (
     modal.Image.debian_slim()
-        .apt_install('git')
+        .apt_install('git', 'ffmpeg')
         .pip_install_from_requirements('requirements.txt')
         .run_commands([
             'git clone https://github.com/ace-step/ACE-Step.git /tmp/ACE-Step',
@@ -139,7 +140,6 @@ class MusicGenServer:
                       for cat in response_text.split(",") if cat.strip()]
         return categories
         
-
     def generate_and_upload_to_s3(
         self,
         prompt: str,
@@ -178,9 +178,17 @@ class MusicGenServer:
             manual_seeds=str(seed)
         )
         
-        audio_s3_key=f"{uuid.uuid4()}.wav"
-        s3_client.upload_file(output_path, bucket_name, audio_s3_key)
+          # Convert to MP3
+  
+        audio = AudioSegment.from_wav(output_path)
+        mp3_output_path = output_path.replace('.wav', '.mp3')
+        audio.export(mp3_output_path, format="mp3", bitrate="192k")
+        
+        audio_s3_key=f"{uuid.uuid4()}.mp3"
+        s3_client.upload_file(mp3_output_path, bucket_name, audio_s3_key)
+        
         os.remove(output_path)
+        os.remove(mp3_output_path)
         
         # thumbnail generation
         thumbnail_prompt = f"{prompt}, album cover art"
