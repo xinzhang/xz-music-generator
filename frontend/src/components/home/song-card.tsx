@@ -21,7 +21,9 @@ export function SongCard({ song }: { song: SongWithRelation }) {
     song.likes ? song.likes.length > 0 : false,
   );
   const [likesCount, setLikesCount] = useState(song._count.likes);
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const handlePlay = async () => {};
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const handleLike = async () => {};
 
   return (

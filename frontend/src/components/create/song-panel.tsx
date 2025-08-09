@@ -107,7 +107,7 @@ export function SongPanel() {
       setLyrics("");
       setStyleInput("");
     } catch (error) {
-      toast.error("Failed to generate song", error?.messge || "Unknown error");
+      toast.error(`Failed to generate song: ${error instanceof Error ? error.message : "Unknown error"} `);
     } finally {
       setLoading(false);
     }

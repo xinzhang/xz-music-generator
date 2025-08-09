@@ -15,14 +15,17 @@ type RequestBody = {
 };
 
 const onFailure = async ({ event }: { event: unknown }) => {
-  await db.song.update({
-    where: {
-      id: event?.data?.event?.data?.songId ?? '',
-    },
-    data: {
-      status: "failed"
-    }
-  });
+  console.error('onfailure', event);
+
+  // await db.song.update({
+  //   where: {
+  //     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
+  //     id: (event as unknown).data?.event?.data?.songId ?? '',
+  //   },
+  //   data: {
+  //     status: "failed"
+  //   }
+  // });
 }
 
 const findSong = async (songId: string) => {
