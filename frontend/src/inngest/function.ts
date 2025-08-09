@@ -17,7 +17,7 @@ type RequestBody = {
 const onFailure = async ({ event }: { event: unknown }) => {
   await db.song.update({
     where: {
-      id: (event?.data as { songId: string}).songId,
+      id: event?.data?.event?.data?.songId ?? '',
     },
     data: {
       status: "failed"
@@ -50,10 +50,11 @@ const findSong = async (songId: string) => {
   });
 }
 
-const checkCredits = (songId: string) => async () => {
-  const song = await findSong(songId);
+type SongType = Awaited<ReturnType<typeof findSong>>;
 
+const getRequestBody = (song: SongType) => {
   let endpoint = "";
+
   let body: RequestBody = {};
 
   const commonParams = {
@@ -71,7 +72,6 @@ const checkCredits = (songId: string) => async () => {
       full_described_song: song.fullDescribedSong,
     }
   }
-  // Custom mode: Lyrics + prompt
   else if (song.lyrics && song.prompt) {
     endpoint = env.GENERATE_WITH_LYRICS;
     body = {
@@ -80,7 +80,6 @@ const checkCredits = (songId: string) => async () => {
       ...commonParams,
     };
   }
-  // Custom mode: Prompt + described lyrics
   else if (song.describedLyrics && song.prompt) {
     endpoint = env.GENERATE_FROM_DESCRIBED_LYRICS;
     body = {
@@ -90,58 +89,76 @@ const checkCredits = (songId: string) => async () => {
     };
   }
 
+  return {endpoint, body}
+}
+
+const checkCredits = (songId: string) => async () => {
+  const song = await findSong(songId);
+
   return {
     userId: song.user.id,
     credits: song.user.credits,
-    endpoint: endpoint,
-    body: body,
+    ...getRequestBody(song),
   }
 }
 
 const updateSongResult = (songId: string, response: Response) => async () => {
     const responseData = response.ok
-          ? ((await response.json()) as {
-              s3_key: string;
-              cover_image_s3_key: string;
-              categories: string[];
-            })
-          : null;
+        ? ((await response.json()) as {
+            s3_key: string;
+            cover_image_s3_key: string;
+            categories: string[];
+          })
+        : null;
+
+    await db.song.update({
+      where: {
+        id: songId,
+      },
+      data: {
+        s3Key: responseData?.s3_key,
+        thumbnailS3Key: responseData?.cover_image_s3_key,
+        status: response.ok ? "processed" : "failed",
+      },
+    });    
+
+    if (responseData && responseData.categories.length > 0) {
       await db.song.update({
-          where: {
-            id: songId,
+        where: { id: songId },
+        data: {
+          categories: {
+            connectOrCreate: responseData.categories.map(
+              (categoryName) => ({
+                where: { name: categoryName },
+                create: { name: categoryName },
+              }),
+            ),
           },
-          data: {
-            s3Key: responseData?.s3_key,
-            thumbnailS3Key: responseData?.cover_image_s3_key,
-            status: response.ok ? "processed" : "failed",
-          },
-        });    
-
-        if (responseData && responseData.categories.length > 0) {
-          await db.song.update({
-            where: { id: songId },
-            data: {
-              categories: {
-                connectOrCreate: responseData.categories.map(
-                  (categoryName) => ({
-                    where: { name: categoryName },
-                    create: { name: categoryName },
-                  }),
-                ),
-              },
-            },
-          });
-        }
-
+        },
+      });
+    }
 }
 
-const updateSongStatus = async (songId:string, status:string) => {
+const updateSongStatus = (songId:string, status:string) => async () => {
   return await db.song.update({
     where: {
       id: songId,
     },
     data: {
       status: status,
+    },
+  });
+}
+
+const deductCredit = (userId: string, response: Response) => async () => {
+  if (!response.ok) return;
+
+  await db.user.update({
+    where: { id: userId },
+    data: {
+      credits: {
+        decrement: 1,
+      },
     },
   });
 }
@@ -164,49 +181,47 @@ export const generateSong = inngest.createFunction(
       checkCredits(songId),
     )
 
+    console.log('check-credits', body, credits)
+
     if (credits > 0) {
       // generate the song
       await step.run(
-        "set-status-processing",
-        async() => {
-          await updateSongStatus(songId, "processing");          
-        }
+        "set-status-processing",        
+        updateSongStatus(songId, "processing")        
       )
 
+      console.log('before call modal', endpoint, body)
+
+      // call MODAL to generate song
       const response = await step.fetch(endpoint, {
         method: "POST",
         body: JSON.stringify(body),
         headers: {
           "Content-Type": "application/json",
-          "Modal-Key": env.MODAL_KEY,
-          "Modal-Secret": env.MODAL_SECRET,
+          // "Modal-Key": env.MODAL_KEY,
+          // "Modal-Secret": env.MODAL_SECRET,
         },
       });
 
+      console.log('call modal finished')
       await step.run(
         "update-song-result",
         updateSongResult(songId, response)
       )
 
-      return await step.run("deduct-credits", async () => {
-        if (!response.ok) return;
+      await step.run(
+        "deduct-credits", 
+        deductCredit(userId, response)
+      );
 
-        return await db.user.update({
-          where: { id: userId },
-          data: {
-            credits: {
-              decrement: 1,
-            },
-          },
-        });
-      });
+      return { message: "song is created"}
+
     } else {
       await step.run(
-        "set-status-no-credits",
-        async () => {
-          return await updateSongStatus(songId, "no credits")
-        }
+        "set-status-no-credits",        
+        updateSongStatus(songId, "no credits")        
       )
+      return { message: "no credit"}
     }
   },
 );

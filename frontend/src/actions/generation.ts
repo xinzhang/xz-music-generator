@@ -116,3 +116,23 @@ export async function getPresignedUrl(key: string) {
   
 }
 
+export async function queueSongTemp(){
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) redirect("/auth/sign-in");
+  const userId = session.user.id;
+  const song = await db.song.create({    
+    data: {
+      userId: userId,
+      title: "test song 1",
+      fullDescribedSong: "random hip hop song",
+      audioDuration: 60,
+    }
+  });
+
+  await inngest.send({
+    name: "generate-song-event",
+    data: { songId: song.id, userId: song.userId },
+  })
+}

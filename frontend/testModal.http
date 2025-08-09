@@ -1,0 +1,7 @@
+POST https://xinzhang--music-generator-musicgenserver-generate-from-d-1a82d2.modal.run
+Content-Type: application/json
+
+{
+  "full_described_song": "radom blues music",
+  "audio_duration": 30
+}
