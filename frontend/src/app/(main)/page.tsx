@@ -99,7 +99,7 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
+    
       <div className="p-4">
         <h1 className="text-3xl font-bold tracking-tight">Discover Music</h1>
 
@@ -114,7 +114,22 @@ export default async function HomePage() {
             </div>
           </div>
         )}
+
+        {/* Categories */}
+        {Object.entries(categorizedSongs)
+          .slice(0, 5)
+          .map(([category, songs]) => (
+            <div key={category} className="mt-6">
+              <h2 className="text-xl font-semibold">{category}</h2>
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {songs.map((song) => (
+                  <SongCard key={song.id} song={song} />
+                ))}
+              </div>
+            </div>
+        ))}
+
       </div>
-    </main>
+    
   );
 }
