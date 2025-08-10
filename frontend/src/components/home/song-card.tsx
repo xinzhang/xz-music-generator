@@ -3,6 +3,10 @@
 import type { Category, Like, Song } from "@prisma/client";
 import { Heart, Loader2, Music, Play } from "lucide-react";
 import { useState } from "react";
+import { getPlayUrl } from "~/actions/generation";
+import { toggleLikeSong } from "~/actions/song";
+
+import { usePlayerStore } from "~/stores/use-player-store";
 
 type SongWithRelation = Song & {
   user: { name: string | null };
@@ -16,15 +20,36 @@ type SongWithRelation = Song & {
 
 export function SongCard({ song }: { song: SongWithRelation }) {
   const [isLoading, setIsLoading] = useState(false);
-  // const setTrack = usePlayerStore((state) => state.setTrack);
+  const setTrack = usePlayerStore((state) => state.setTrack);
   const [isLiked, setIsLiked] = useState(
     song.likes ? song.likes.length > 0 : false,
   );
   const [likesCount, setLikesCount] = useState(song._count.likes);
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  const handlePlay = async () => {};
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  const handleLike = async () => {};
+
+  const handlePlay = async () => {
+    setIsLoading(true);
+    const playUrl = await getPlayUrl(song.id);
+
+    setTrack({
+      id: song.id,
+      title: song.title,
+      url: playUrl,
+      artwork: song.thumbnailUrl,
+      prompt: song.prompt,
+      createdByUserName: song.user.name,
+    });
+
+    setIsLoading(false);
+  };
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    setIsLiked(!isLiked);
+    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+
+    await toggleLikeSong(song.id);
+  };
 
   return (
     <div>

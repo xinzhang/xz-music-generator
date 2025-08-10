@@ -75,6 +75,8 @@ export function SongPanel() {
       return;
     }
 
+    setLoading(true);
+    
     // Generate song
     let requestBody: GenerateRequest;
 
@@ -100,8 +102,7 @@ export function SongPanel() {
       }
     }
 
-    try {
-      setLoading(true);
+    try {      
       await generateSong(requestBody);
       setDescription("");
       setLyrics("");
