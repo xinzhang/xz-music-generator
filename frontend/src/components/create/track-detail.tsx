@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Loader2, MoreHorizontal, Music, Pencil, Play, Trash2 } from "lucide-react";
+import { Download, Loader2, MoreHorizontal, Music, Pause, Pencil, Play, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { Track } from "./track-list";
 import { Button } from "../ui/button";
@@ -10,6 +10,7 @@ import { deleteSong, getPlayUrl } from "~/actions/generation";
 import { Badge } from "../ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { useState } from "react";
+import { usePlayerStore } from "~/stores/use-player-store";
 
 export type TrackDetailProps = {
   loadingTrackId: string | null, 
@@ -22,6 +23,9 @@ export default function TrackDetail(
   { loadingTrackId, track, handleTrackSelect, setTrackToRename }: TrackDetailProps) {
   
   const [isDeleting, setIsDeleting] = useState(false);
+  const { track: currentTrack, setTrack } = usePlayerStore();
+  
+  const isCurrentTrack = currentTrack?.id === track.id;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -34,14 +38,27 @@ export default function TrackDetail(
     }
   };
 
+  const handleThumbnailClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isCurrentTrack) {
+      // If this track is currently playing, stop it by clearing the track
+      setTrack({ id: "", title: null, url: null, artwork: null, prompt: null, createdByUserName: null });
+    } else {
+      await handleTrackSelect(track);
+    }
+  };
+
   return (
     <div
       key={track.id}
-      className="hover:bg-muted/50 flex cursor-pointer items-center gap-4 rounded-lg p-3 transition-colors"
-      onClick={() => handleTrackSelect(track)}
+      className="hover:bg-muted/50 flex items-center gap-4 rounded-lg p-3 transition-colors"
     >
       {/* Thumbnail */}
-      <div className="group relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md">
+      <div 
+        className="group relative h-12 w-12 flex-shrink-0 cursor-pointer overflow-hidden rounded-md"
+        onClick={handleThumbnailClick}
+      >
         {track.thumbnailUrl ? (
           <Image
             className="h-full w-full object-cover"
@@ -55,9 +72,15 @@ export default function TrackDetail(
             <Music className="text-muted-foreground h-6 w-6" />
           </div>
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+          isCurrentTrack 
+            ? "bg-black/40 opacity-100" 
+            : "bg-black/20 opacity-0 group-hover:opacity-100"
+        }`}>
           {loadingTrackId === track.id ? (
             <Loader2 className="animate-spin text-white" />
+          ) : isCurrentTrack ? (
+            <Pause className="fill-white text-white" />
           ) : (
             <Play className="fill-white text-white" />
           )}
@@ -65,7 +88,7 @@ export default function TrackDetail(
       </div>
 
       {/* Track info */}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 cursor-default">
         <div className="flex items-center gap-2">
           <h3 className="truncate text-sm font-medium">{track.title}</h3>
           {track.instrumental && <Badge variant="outline">Instrumental</Badge>}
