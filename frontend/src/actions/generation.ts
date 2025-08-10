@@ -22,8 +22,7 @@ export async function generateSong(generateRequest: GenerateRequest) {
       headers: await headers(),
     });
     if (!session) redirect("/auth/sign-in");
-    await queueSong(generateRequest, 7.5, session.user.id);
-    await queueSong(generateRequest, 7.5, session.user.id);
+    await queueSong(generateRequest, 7.5, session.user.id);    
     revalidatePath("/create")
 }
 
