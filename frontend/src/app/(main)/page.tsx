@@ -2,6 +2,7 @@ import { Music } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getPresignedUrl } from "~/actions/generation";
+import { Categories } from "~/components/home/categories";
 import { SongCard } from "~/components/home/song-card";
 import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
@@ -63,6 +64,12 @@ export default async function HomePage() {
 
   const trendingSongIds = new Set(trendingSongs.map((song) => song.id));
 
+  const categories = await db.category.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  });
+
   const categorizedSongs = songsWithUrls
     .filter(
       (song) => !trendingSongIds.has(song.id) && song.categories.length > 0,
@@ -114,6 +121,8 @@ export default async function HomePage() {
             </div>
           </div>
         )}
+
+        <Categories categories={categories} />
 
         {/* Categories */}
         {Object.entries(categorizedSongs)
