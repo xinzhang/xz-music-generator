@@ -32,6 +32,8 @@ export default function TrackDetail(
             className="h-full w-full object-cover"
             src={track.thumbnailUrl}
             alt={track.title ?? ''}
+            width={48}
+            height={48}
           />
         ) : (
           <div className="bg-muted flex h-full w-full items-center justify-center">

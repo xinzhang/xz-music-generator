@@ -62,6 +62,8 @@ export function SongCard({ song }: { song: SongWithRelation }) {
               className="h-full w-full object-cover object-center"
               src={song.thumbnailUrl}
               alt={song.title ?? ''} 
+              width={200}
+              height={200}
               />
           ) : (
             <div className="bg-muted flex h-full w-full items-center justify-center">

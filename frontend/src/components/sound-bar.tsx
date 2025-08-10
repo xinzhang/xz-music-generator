@@ -119,6 +119,8 @@ export default function SoundBar() {
                     className="h-full w-full rounded-md object-cover"
                     src={track.artwork}
                     alt={track.title ?? ''}
+                    width={40}
+                    height={40}
                   />
                 ) : (
                   <Music className="h-4 w-4 text-white" />
