@@ -1,11 +1,13 @@
 "use client";
 
-import { Badge, Download, Loader2, MoreHorizontal, Music, Pencil, Play } from "lucide-react";
+import { Download, Loader2, MoreHorizontal, Music, Pencil, Play } from "lucide-react";
+import Image from "next/image";
 import type { Track } from "./track-list";
 import { Button } from "../ui/button";
 import { setPublishedStatus } from "~/actions/song";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { getPlayUrl } from "~/actions/generation";
+import { Badge } from "../ui/badge";
 
 export type TrackDetailProps = {
   loadingTrackId: string | null, 
@@ -26,9 +28,10 @@ export default function TrackDetail(
       {/* Thumbnail */}
       <div className="group relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md">
         {track.thumbnailUrl ? (
-          <img
+          <Image
             className="h-full w-full object-cover"
             src={track.thumbnailUrl}
+            alt={track.title ?? ''}
           />
         ) : (
           <div className="bg-muted flex h-full w-full items-center justify-center">

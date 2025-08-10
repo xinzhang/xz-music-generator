@@ -8,6 +8,8 @@ import { Input } from "../ui/input";
 import TrackDetail from "./track-detail";
 import { getPlayUrl } from "~/actions/generation";
 import { usePlayerStore } from "~/stores/use-player-store";
+import { RenameDialog } from "./rename-dialog";
+import { renameSong } from "~/actions/song";
 
 export interface Track {
   id: string;
@@ -147,13 +149,14 @@ export default function TrackList({tracks}:{tracks: Track[]}) {
         </div>
       </div>
 
-      {/* {trackToRename && (
+      {/* rename track */}
+      {trackToRename && (
         <RenameDialog
           track={trackToRename}
           onClose={() => setTrackToRename(null)}
           onRename={(trackId, newTitle) => renameSong(trackId, newTitle)}
         />
-      )} */}
+      )}
     </div>
   )
 

@@ -5,6 +5,7 @@ import { Heart, Loader2, Music, Play } from "lucide-react";
 import { useState } from "react";
 import { getPlayUrl } from "~/actions/generation";
 import { toggleLikeSong } from "~/actions/song";
+import Image from "next/image";
 
 import { usePlayerStore } from "~/stores/use-player-store";
 
@@ -57,10 +58,11 @@ export function SongCard({ song }: { song: SongWithRelation }) {
         {/* thumbnail */}
         <div className="group relative aspect-square w-full overflow-hidden rounded-md bg-gray-200 group-hover:opacity-75">
           {song.thumbnailUrl ? (
-            <img
+            <Image 
               className="h-full w-full object-cover object-center"
               src={song.thumbnailUrl}
-            />
+              alt={song.title ?? ''} 
+              />
           ) : (
             <div className="bg-muted flex h-full w-full items-center justify-center">
               <Music className="text-muted-foreground h-12 w-12" />

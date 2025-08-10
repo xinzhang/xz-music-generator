@@ -7,8 +7,9 @@ import { Toaster } from "sonner";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { AppSidebar } from "~/components/sidebar/app-sidebar";
 import { Separator } from "~/components/ui/separator";
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "~/components/ui/breadcrumb";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem } from "~/components/ui/breadcrumb";
 import BreadCrumbPageClient from "~/components/sidebar/breadcrumb-page-client";
+import SoundBar from "~/components/sound-bar";
 
 export const metadata: Metadata = {
   title: "XZ Music Generator",
@@ -45,6 +46,7 @@ export default function RootLayout({
                   </div>
                 </header>
                 <main className="flex-1 overflow-y-auto">{children}</main>
+                <SoundBar />
             </SidebarInset>
             
           </SidebarProvider>

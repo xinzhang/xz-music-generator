@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings, User } from "lucide-react"
+import { User } from "lucide-react"
  
 import {
   Sidebar,
@@ -8,8 +8,6 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "~/components/ui/sidebar"
 import SidebarMenuItems from "./sidebar-menu-items"
 import { Credits } from "./credits"

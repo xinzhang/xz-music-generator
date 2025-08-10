@@ -9,7 +9,7 @@ interface PlayerTrack {
   createdByUserName: string | null;
 }
 
-interface PlayerState {
+export interface PlayerState {
   track: PlayerTrack | null;
   setTrack: (track: PlayerTrack) => void;
 }
