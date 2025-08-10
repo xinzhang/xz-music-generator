@@ -6,7 +6,7 @@ import { env } from '~/env';
 import { inngest } from '~/inngest/client';
 import { auth } from '~/lib/auth';
 import { db } from '~/server/db';
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export interface GenerateRequest {
@@ -114,6 +114,58 @@ export async function getPresignedUrl(key: string) {
     expiresIn: 3600,
   });
   
+}
+
+export async function deleteSong(songId: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  if (!session) redirect("/auth/sign-in");
+
+  const song = await db.song.findUnique({
+    where: {
+      id: songId,
+      userId: session.user.id,
+    },
+    select: {
+      s3Key: true,
+      thumbnailS3Key: true,
+    }
+  });
+
+  if (!song) {
+    throw new Error("Song not found or you don't have permission to delete it");
+  }
+
+  const s3Client = new S3Client({
+    region: env.AWS_REGION,
+    credentials: {
+      accessKeyId: env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: env.AWS_SECRET_ACCESS_KEY_ID,
+    }
+  });
+
+  if (song.s3Key) {
+    await s3Client.send(new DeleteObjectCommand({
+      Bucket: env.S3_BUCKET_NAME,
+      Key: song.s3Key,
+    }));
+  }
+
+  if (song.thumbnailS3Key) {
+    await s3Client.send(new DeleteObjectCommand({
+      Bucket: env.S3_BUCKET_NAME,
+      Key: song.thumbnailS3Key,
+    }));
+  }
+
+  await db.song.delete({
+    where: {
+      id: songId,
+    }
+  });
+
+  revalidatePath("/create");
 }
 
 export async function queueSongTemp(){

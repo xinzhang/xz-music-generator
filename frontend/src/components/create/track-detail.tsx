@@ -1,13 +1,15 @@
 "use client";
 
-import { Download, Loader2, MoreHorizontal, Music, Pencil, Play } from "lucide-react";
+import { Download, Loader2, MoreHorizontal, Music, Pencil, Play, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { Track } from "./track-list";
 import { Button } from "../ui/button";
 import { setPublishedStatus } from "~/actions/song";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { getPlayUrl } from "~/actions/generation";
+import { deleteSong, getPlayUrl } from "~/actions/generation";
 import { Badge } from "../ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { useState } from "react";
 
 export type TrackDetailProps = {
   loadingTrackId: string | null, 
@@ -18,6 +20,19 @@ export type TrackDetailProps = {
 
 export default function TrackDetail(
   { loadingTrackId, track, handleTrackSelect, setTrackToRename }: TrackDetailProps) {
+  
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteSong(track.id);
+    } catch (error) {
+      console.error("Failed to delete song:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div
@@ -85,6 +100,7 @@ export default function TrackDetail(
                 const playUrl = await getPlayUrl(track.id);
                 window.open(playUrl, "_blank");
               }}
+              className="cursor-pointer"
             >
               <Download className="mr-2" /> Download
             </DropdownMenuItem>
@@ -93,9 +109,46 @@ export default function TrackDetail(
                 e.stopPropagation();
                 setTrackToRename(track);
               }}
+              className="cursor-pointer"
             >
               <Pencil className="mr-2" /> Rename
             </DropdownMenuItem>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem
+                  onClick={(e) => e.stopPropagation()}
+                  onSelect={(e) => e.preventDefault()}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="mr-2" /> Remove
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Song</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete &quot;{track.title}&quot;? This action cannot be undone and will permanently remove the song from your library and storage.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
